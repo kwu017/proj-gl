@@ -129,13 +129,22 @@ void clip_triangle(driver_state& state, const data_geometry* in[3],int face)
 void rasterize_triangle(driver_state& state, const data_geometry* in[3])
 {
     //std::cout<<"TODO: implement rasterization"<<std::endl;
+    // data_geometry* out = new data_geometry[3];
+    // int ax, ay, bx, by, cx, cy;
+    // int px, py;
+  
+    // data_vertex ver;
     int i, j;
     int x[3], y[3];
     unsigned image_index;
-    float area_abc;
+    float area_abc, area_pbc, area_apc, area_abp;
     float alpha, beta, gamma;
     
-    for (unsigned k = 0; k < 3; k++) {
+    for (int k = 0; k < 3; k++) {
+        //ver.data = in[k]->data;
+        //state.vertext_shader(ver, out[k], state.uniform_data);
+        //state.vertex_shader(ver, out[k], state.uniform_data);
+
         i = static_cast<int>((state.image_width / 2) * (*in)[k].gl_Position[0] + ((state.image_width / 2) - 0.5));
         j = static_cast<int>((state.image_height / 2) * (*in)[k].gl_Position[1] + ((state.image_height / 2) - 0.5));
 
@@ -146,14 +155,20 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
         state.image_color[image_index] = make_pixel(255, 255, 255);
         
     }
+ 
+    // area_abc = 0.5 * (((bx * cy) - (cx * by))-((ax * cy) - (cx * ay)) - ((ax * by)-(bx * ay)));
     
     area_abc = (0.5f * ((x[1] * y[2] - x[2] * y[1]) - (x[0] * y[2] - x[2] * y[0]) - (x[0] * y[1] - x[1] * y[0])));
     
     for (int j = 0; j < state.image_height; j++) {
         for (int i = 0; i < state.image_width; i++) {
-            alpha = (0.5f * ((x[1] * y[2] - x[2] * y[1]) + (y[1] - y[2]) * i + (x[2] - x[1]) * j)) / area_abc;
-            beta = (0.5f * ((x[2] * y[0] - x[0] * y[2]) + (y[2] - y[0]) * i + (x[0] - x[2]) * j)) / area_abc;
-            gamma = (0.5f * ((x[0] * y[1] - x[1] * y[0]) + (y[0] - y[1]) * i + (x[1] - x[0]) * j)) / area_abc;
+            area_pbc = (0.5f * ((x[1] * y[2] - x[2] * y[1]) + (y[1] - y[2]) * i + (x[2] - x[1]) * j));
+            area_apc = (0.5f * ((x[2] * y[0] - x[0] * y[2]) + (y[2] - y[0]) * i + (x[0] - x[2]) * j));
+            area_abp = (0.5f * ((x[0] * y[1] - x[1] * y[0]) + (y[0] - y[1]) * i + (x[1] - x[0]) * j));
+
+            alpha = area_pbc/area_abc;
+            beta = area_apc/area_abc;
+            gamma = area_abp/area_abc;
         
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
                 image_index = i + j * state.image_width;
@@ -161,56 +176,5 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
             }
         }
     }
-    // data_geometry* out = new data_geometry[3];
-    // int i, j;
-    // unsigned image_index;
-    // int ax, ay, bx, by, cx, cy;
-    // int px, py;
-    // float area_abc, area_pbc, area_apc, area_abp;
-    // float alpha, beta, gamma;
-  
-    // data_vertex ver;
-  
-    // for (int k = 0; k < 3; k++) {
-    //     ver.data = in[k]->data;
-
-    //     state.vertex_shader(ver, out[k], state.uniform_data);
-
-    //     out[k].gl_Position[0] /= out[k].gl_Position[3];
-    //     out[k].gl_Position[1] /= out[k].gl_Position[3];
-  
-    //     i = state.image_width/2 * out[k].gl_Position[0] + state.image_width/2 - (0.5);
-    //     j = state.image_height/2 * out[k].gl_Position[1] + state.image_height/2 - (0.5);
-
-    //     image_index = i + j * state.image_width;
-    //     state.image_color[image_index] = make_pixel(255, 255, 255);
-    // }
-
-    // ax = (state.image_width/2)*out[0].gl_Position[0] + (state.image_width/2) - (0.5);
-    // ay = (state.image_height/2)*out[0].gl_Position[1] + (state.image_height/2) - (0.5);
-    // bx = (state.image_width/2)*out[1].gl_Position[0] + (state.image_width/2) - (0.5);
-    // by = (state.image_height/2)*out[1].gl_Position[1] + (state.image_height/2) - (0.5);
-    // cx = (state.image_width/2)*out[2].gl_Position[0] + (state.image_width/2) - (0.5);
-    // cy = (state.image_height/2)*out[2].gl_Position[1] + (state.image_height/2) - (0.5);
- 
-    // area_abc = 0.5 * (((bx * cy) - (cx * by))-((ax * cy) - (cx * ay)) - ((ax * by)-(bx * ay)));
-
-    // for (px = 0; px < state.image_width; px++) {
-    //     for (py = 0; py < state.image_height; py++) {
-    //         area_pbc = 0.5 * (((bx * cy) - (cx * by)) + ((by - cy) * px) + ((cx - bx) * py));
-    //         area_apc = 0.5 * (((ax * cy) - (cx * ay)) + ((cy - ay) * px) + ((ax - cx) * py));
-    //         area_abp = 0.5 * (((ax * by) - (bx * ay)) + ((ay - by) * px) + ((bx - ax) * py));        
-
-    //         alpha = area_pbc/area_abc;
-    //         beta = area_apc/area_abc;
-    //         gamma = area_abp/area_abc;
-
-    //         image_index = px + py * state.image_width;
-
-    //         if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-    //             state.image_color[image_index] = make_pixel(255, 255, 255);
-    //         }
-    //     }   
-    // }
 }
 
