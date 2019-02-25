@@ -39,10 +39,11 @@ void initialize_render(driver_state& state, int width, int height)
 //   render_type::strip -    The vertices are to be interpreted as a triangle strip.
 void render(driver_state& state, render_type type)
 {
-    //std::cout<<"TODO: implement rendering. UM WAT."<<std::endl;
+    //std::cout<<"TODO: implement rendering."<<std::endl;
+    //basically had to change this whole thing -___-
     data_geometry *tri_array = new data_geometry[3];
+    data_vertex ver; //{};
     float *p = state.vertex_data;
-    data_vertex in{};
 
     switch (type){
         case render_type::triangle:
@@ -53,45 +54,42 @@ void render(driver_state& state, render_type type)
                 }
 
                 for (int k = 0; k < 3; k++) {
-                    in.data = tri_array[k].data;
-                    state.vertex_shader(in, tri_array[k], state.uniform_data);
+                    ver.data = tri_array[k].data;
+                    state.vertex_shader(ver, tri_array[k], state.uniform_data);
                 }
 
                 rasterize_triangle(state, (const data_geometry**) &tri_array);
             }
-        //{
-            //for (int i = 0; i < state.num_vertices; i += 3) {
 
-                // for (int i = 0; i < state.num_vertices; i += 3) {
-                //     const data_geometry **tri_array = new const data_geometry*[3];
+            // for (int i = 0; i < state.num_vertices; i += 3) {
+            //     const data_geometry** tri_array = new const data_geometry*[3];
             
-                //     tri_array[0] = new data_geometry;
-                //     tri_array[1] = new data_geometry;
-                //     tri_array[2] = new data_geometry;
+            //     tri_array[0] = new data_geometry;
+            //     tri_array[1] = new data_geometry;
+            //     tri_array[2] = new data_geometry;
 
 
-                //     const_cast<data_geometry*>(tri_array[0])->data = new float[MAX_FLOATS_PER_VERTEX];
-                //     const_cast<data_geometry*>(tri_array[1])->data = new float[MAX_FLOATS_PER_VERTEX];
-                //     const_cast<data_geometry*>(tri_array[2])->data = new float[MAX_FLOATS_PER_VERTEX];
-                //     for (int j = 0; j < state.floats_per_vertex; j++) {
-                //         tri_array[0]->data[j] = state.vertex_data[j + (state.floats_per_vertex * i)];
-                //         tri_array[1]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 1))];
-                //         tri_array[2]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 2))];
-                //     }
-                //     rasterize_triangle(state, tri_array);
+            //     const_cast<data_geometry*>(tri_array[0])->data = new float[MAX_FLOATS_PER_VERTEX];
+            //     const_cast<data_geometry*>(tri_array[1])->data = new float[MAX_FLOATS_PER_VERTEX];
+            //     const_cast<data_geometry*>(tri_array[2])->data = new float[MAX_FLOATS_PER_VERTEX];
+            //     for (int j = 0; j < state.floats_per_vertex; j++) {
+            //         tri_array[0]->data[j] = state.vertex_data[j + (state.floats_per_vertex * i)];
+            //         tri_array[1]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 1))];
+            //         tri_array[2]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 2))];
+            //     }
+            //     rasterize_triangle(state, tri_array);
 
-                //     delete [] tri_array[0]->data;
-                //     delete [] tri_array[1]->data;
-                //     delete [] tri_array[2]->data;
+            //     delete [] tri_array[0]->data;
+            //     delete [] tri_array[1]->data;
+            //     delete [] tri_array[2]->data;
 
-                //     delete tri_array[0];
-                //     delete tri_array[1];
-                //     delete tri_array[2];
+            //     delete tri_array[0];
+            //     delete tri_array[1];
+            //     delete tri_array[2];
 
-                //     delete [] tri_array;
-                // }
+            //     delete [] tri_array;
+            // }
         break;
-        //}
 
         case render_type::indexed:
         break;
@@ -158,13 +156,13 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
  
     // area_abc = 0.5 * (((bx * cy) - (cx * by))-((ax * cy) - (cx * ay)) - ((ax * by)-(bx * ay)));
     
-    area_abc = (0.5f * ((x[1] * y[2] - x[2] * y[1]) - (x[0] * y[2] - x[2] * y[0]) - (x[0] * y[1] - x[1] * y[0])));
+    area_abc = (0.5 * ((x[1] * y[2] - x[2] * y[1]) - (x[0] * y[2] - x[2] * y[0]) - (x[0] * y[1] - x[1] * y[0])));
     
     for (int j = 0; j < state.image_height; j++) {
         for (int i = 0; i < state.image_width; i++) {
-            area_pbc = (0.5f * ((x[1] * y[2] - x[2] * y[1]) + (y[1] - y[2]) * i + (x[2] - x[1]) * j));
-            area_apc = (0.5f * ((x[2] * y[0] - x[0] * y[2]) + (y[2] - y[0]) * i + (x[0] - x[2]) * j));
-            area_abp = (0.5f * ((x[0] * y[1] - x[1] * y[0]) + (y[0] - y[1]) * i + (x[1] - x[0]) * j));
+            area_pbc = (0.5 * ((x[1] * y[2] - x[2] * y[1]) + (y[1] - y[2]) * i + (x[2] - x[1]) * j));
+            area_apc = (0.5 * ((x[2] * y[0] - x[0] * y[2]) + (y[2] - y[0]) * i + (x[0] - x[2]) * j));
+            area_abp = (0.5 * ((x[0] * y[1] - x[1] * y[0]) + (y[0] - y[1]) * i + (x[1] - x[0]) * j));
 
             alpha = area_pbc/area_abc;
             beta = area_apc/area_abc;
