@@ -100,47 +100,30 @@ void clip_triangle(driver_state& state, const data_geometry* in[3],int face)
 void rasterize_triangle(driver_state& state, const data_geometry* in[3])
 {
     //std::cout<<"TODO: implement rasterization"<<std::endl;
-    // data_geometry* out = new data_geometry[3];
-    // int ax, ay, bx, by, cx, cy;
-    // int px, py;
-  
-    // data_vertex ver;
-    //int i, j;
-    //int x[3], y[3];
-    unsigned image_index;
+    
+    int image_index;
     int ax, ay, bx, by, cx, cy;
     float area_abc, area_pbc, area_apc, area_abp;
     float alpha, beta, gamma;
-    int picCoords[3][2];
-    
+    int pix[3][2];
+
     for (int k = 0; k < 3; k++) {
-        //ver.data = in[k]->data;
-        //state.vertext_shader(ver, out[k], state.uniform_data);
-        //state.vertex_shader(ver, out[k], state.uniform_data);
-
-        picCoords[k][0] = (state.image_width/2) * (in[k]->gl_Position[0]/in[k]->gl_Position[3]) + (state.image_width/2) - 0.5;
-        picCoords[k][1] = (state.image_height/2) * (in[k]->gl_Position[1]/in[k]->gl_Position[3]) + (state.image_height/2) - 0.5;
-
-        // x[k] = i;
-        // y[k] = j;
-        
-        image_index = picCoords[k][0] + picCoords[k][1] * state.image_width;
-        //state.image_color[image_index] = make_pixel(255, 255, 255);
-        
+        pix[k][0] = (state.image_width/2.0) * in[k]->gl_Position[0]/in[k]->gl_Position[3] + state.image_width/2.0 - 0.5;
+        pix[k][1] = (state.image_height/2.0) * in[k]->gl_Position[1]/in[k]->gl_Position[3] + state.image_height/2.0 - 0.5;
+        //image_index = pix[k][0] + pix[k][1] * state.image_width;
     }
- 
-    // area_abc = 0.5 * (((bx * cy) - (cx * by))-((ax * cy) - (cx * ay)) - ((ax * by)-(bx * ay)));
-    ax = picCoords[0][0];
-    ay = picCoords[0][1];
-
-    bx = picCoords[1][0];
-    by = picCoords[1][1];
-
-    cx = picCoords[2][0];
-    cy = picCoords[2][1];
     
+    ax = pix[0][0]; 
+    ay = pix[0][1];
+
+    bx = pix[1][0]; 
+    by = pix[1][1];
+
+    cx = pix[2][0]; 
+    cy = pix[2][1];
+
     area_abc = 0.5 * ((bx * cy - cx * by) - (ax * cy - cx * ay) + (ax * by - bx * ay));
-    
+
     for (int j = 0; j < state.image_height; j++) {
         for (int i = 0; i < state.image_width; i++) {
             area_pbc = 0.5 * ((bx * cy - cx * by) + (by - cy) * i + (cx - bx) * j);
@@ -150,16 +133,16 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
             alpha = area_pbc/area_abc;
             beta = area_apc/area_abc;
             gamma = area_abp/area_abc;
-        
+
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-                int image_index1 = i + j * state.image_width;
-                //state.image_color[image_index] = make_pixel(255, 255, 255);
+                image_index = i + j * state.image_width;
                 auto *data = new float[MAX_FLOATS_PER_VERTEX];
                 data_fragment frag{data};
                 data_output output;
-
+        
                 for (int k = 0; k < state.floats_per_vertex; k++) {
                     float k_gour;
+
                     switch(state.interp_rules[k]) {
                         case interp_type::flat:
                             frag.data[k] = in[0]->data[k];
@@ -167,14 +150,13 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
 
                         case interp_type::smooth:
                             k_gour = (alpha/in[0]->gl_Position[3] + beta/in[1]->gl_Position[3] + gamma/in[2]->gl_Position[3]);
-
-                            alpha /= (k_gour * (in[0]->gl_Position[3]));
-                            beta /= (k_gour * (in[1]->gl_Position[3]));
-                            gamma /= (k_gour * (in[2]->gl_Position[3]));
+                            alpha = alpha/(k_gour * (in[0]->gl_Position[3]));
+                            beta = beta/(k_gour * (in[1]->gl_Position[3]));
+                            gamma = gamma/(k_gour * (in[2]->gl_Position[3]));
                         break;
 
                         case interp_type::noperspective:
-                            frag.data[k] = alpha * in[0]->data[i] + beta * in[1]->data[i] + gamma * in[2]->data[i];
+                            frag.data[k] = alpha * in[0]->data[k] + beta * in[1]->data[k] + gamma * in[2]->data[k];
                         break;
 
                         default:
@@ -183,7 +165,7 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
                 }
                 state.fragment_shader((const data_fragment)frag, output, state.uniform_data);
                 output.output_color = output.output_color * 255;
-                state.image_color[image_index1] = make_pixel(output.output_color[0], output.output_color[1], output.output_color[2]);
+                state.image_color[image_index] = make_pixel(output.output_color[0], output.output_color[1], output.output_color[2]);
             }
         }
     }
