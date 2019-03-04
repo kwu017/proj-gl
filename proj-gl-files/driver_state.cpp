@@ -60,35 +60,6 @@ void render(driver_state& state, render_type type)
 
                 rasterize_triangle(state, (const data_geometry**) &tri_array);
             }
-
-            // for (int i = 0; i < state.num_vertices; i += 3) {
-            //     const data_geometry** tri_array = new const data_geometry*[3];
-            
-            //     tri_array[0] = new data_geometry;
-            //     tri_array[1] = new data_geometry;
-            //     tri_array[2] = new data_geometry;
-
-
-            //     const_cast<data_geometry*>(tri_array[0])->data = new float[MAX_FLOATS_PER_VERTEX];
-            //     const_cast<data_geometry*>(tri_array[1])->data = new float[MAX_FLOATS_PER_VERTEX];
-            //     const_cast<data_geometry*>(tri_array[2])->data = new float[MAX_FLOATS_PER_VERTEX];
-            //     for (int j = 0; j < state.floats_per_vertex; j++) {
-            //         tri_array[0]->data[j] = state.vertex_data[j + (state.floats_per_vertex * i)];
-            //         tri_array[1]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 1))];
-            //         tri_array[2]->data[j] = state.vertex_data[j + (state.floats_per_vertex * (i + 2))];
-            //     }
-            //     rasterize_triangle(state, tri_array);
-
-            //     delete [] tri_array[0]->data;
-            //     delete [] tri_array[1]->data;
-            //     delete [] tri_array[2]->data;
-
-            //     delete tri_array[0];
-            //     delete tri_array[1];
-            //     delete tri_array[2];
-
-            //     delete [] tri_array;
-            // }
         break;
 
         case render_type::indexed:
@@ -103,7 +74,7 @@ void render(driver_state& state, render_type type)
         default:
         break;
     }
-    delete [] tri_array;
+    //delete [] tri_array;
 }
 
 
@@ -145,8 +116,8 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
         //state.vertext_shader(ver, out[k], state.uniform_data);
         //state.vertex_shader(ver, out[k], state.uniform_data);
 
-        i = static_cast<int>((state.image_width / 2) * (*in)[k].gl_Position[0] + ((state.image_width / 2) - 0.5));
-        j = static_cast<int>((state.image_height / 2) * (*in)[k].gl_Position[1] + ((state.image_height / 2) - 0.5));
+        i = (state.image_width/2) * (in[k]->gl_Position[0]/in[k]->gl_Position[3]) + (state.image_width/2) - 0.5;
+        j = (state.image_height/2) * (in[k]->gl_Position[1]/in[k]->gl_Position[3]) + (state.image_height/2) - 0.5;
 
         x[k] = i;
         y[k] = j;
@@ -171,7 +142,7 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
             gamma = area_abp/area_abc;
         
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-                image_index = i + j * state.image_width;
+                int image_index1 = i + j * state.image_width;
                 //state.image_color[image_index] = make_pixel(255, 255, 255);
                 auto *data = new float[MAX_FLOATS_PER_VERTEX];
                 data_fragment frag{data};
@@ -202,7 +173,7 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
                 }
                 state.fragment_shader((const data_fragment)frag, output, state.uniform_data);
                 output.output_color = output.output_color * 255;
-                state.image_color[image_index] = make_pixel(output.output_color[0], output.output_color[1], output.output_color[2]);
+                state.image_color[image_index1] = make_pixel(output.output_color[0], output.output_color[1], output.output_color[2]);
             }
         }
     }
