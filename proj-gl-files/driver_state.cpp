@@ -103,6 +103,7 @@ void render(driver_state& state, render_type type)
         default:
         break;
     }
+    delete [] tri_array;
 }
 
 
@@ -118,6 +119,7 @@ void clip_triangle(driver_state& state, const data_geometry* in[3],int face)
         return;
     }
     std::cout<<"TODO: implement clipping. (The current code passes the triangle through without clipping them.)"<<std::endl;
+    //vec4 left, right, top, bottom, far, near;
     clip_triangle(state,in,face+1);
 }
 
@@ -150,7 +152,7 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
         y[k] = j;
         
         image_index = i + j * state.image_width;
-        state.image_color[image_index] = make_pixel(255, 255, 255);
+        //state.image_color[image_index] = make_pixel(255, 255, 255);
         
     }
  
@@ -170,7 +172,37 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
         
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
                 image_index = i + j * state.image_width;
-                state.image_color[image_index] = make_pixel(255, 255, 255);
+                //state.image_color[image_index] = make_pixel(255, 255, 255);
+                auto *data = new float[MAX_FLOATS_PER_VERTEX];
+                data_fragment frag{data};
+                data_output output;
+
+                for (int k = 0; k < state.floats_per_vertex; k++) {
+                    float k_gour;
+                    switch(state.interp_rules[k]) {
+                        case interp_type::flat:
+                            frag.data[k] = in[0]->data[k];
+                        break;
+
+                        case interp_type::smooth:
+                            k_gour = (alpha/in[0]->gl_Position[3] + beta/in[1]->gl_Position[3] + gamma/in[2]->gl_Position[3]);
+
+                            alpha /= (k_gour * (in[0]->gl_Position[3]));
+                            beta /= (k_gour * (in[1]->gl_Position[3]));
+                            gamma /= (k_gour * (in[2]->gl_Position[3]));
+                        break;
+
+                        case interp_type::noperspective:
+                            frag.data[k] = alpha*in[0]->data[i] + beta*in[1]->data[i] + gamma*in[2]->data[i];
+                        break;
+
+                        default:
+                        break;
+                    }
+                }
+                state.fragment_shader((const data_fragment)frag, output, state.uniform_data);
+                output.output_color = output.output_color * 255;
+                state.image_color[image_index] = make_pixel(output.output_color[0], output.output_color[1], output.output_color[2]);
             }
         }
     }
