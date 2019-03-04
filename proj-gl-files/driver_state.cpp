@@ -105,37 +105,47 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
     // int px, py;
   
     // data_vertex ver;
-    int i, j;
-    int x[3], y[3];
+    //int i, j;
+    //int x[3], y[3];
     unsigned image_index;
+    int ax, ay, bx, by, cx, cy;
     float area_abc, area_pbc, area_apc, area_abp;
     float alpha, beta, gamma;
+    int picCoords[3][2];
     
     for (int k = 0; k < 3; k++) {
         //ver.data = in[k]->data;
         //state.vertext_shader(ver, out[k], state.uniform_data);
         //state.vertex_shader(ver, out[k], state.uniform_data);
 
-        i = (state.image_width/2) * (in[k]->gl_Position[0]/in[k]->gl_Position[3]) + (state.image_width/2) - 0.5;
-        j = (state.image_height/2) * (in[k]->gl_Position[1]/in[k]->gl_Position[3]) + (state.image_height/2) - 0.5;
+        picCoords[k][0] = (state.image_width/2) * (in[k]->gl_Position[0]/in[k]->gl_Position[3]) + (state.image_width/2) - 0.5;
+        picCoords[k][1] = (state.image_height/2) * (in[k]->gl_Position[1]/in[k]->gl_Position[3]) + (state.image_height/2) - 0.5;
 
-        x[k] = i;
-        y[k] = j;
+        // x[k] = i;
+        // y[k] = j;
         
-        image_index = i + j * state.image_width;
+        image_index = picCoords[k][0] + picCoords[k][1] * state.image_width;
         //state.image_color[image_index] = make_pixel(255, 255, 255);
         
     }
  
     // area_abc = 0.5 * (((bx * cy) - (cx * by))-((ax * cy) - (cx * ay)) - ((ax * by)-(bx * ay)));
+    ax = picCoords[0][0];
+    ay = picCoords[0][1];
+
+    bx = picCoords[1][0];
+    by = picCoords[1][1];
+
+    cx = picCoords[2][0];
+    cy = picCoords[2][1];
     
-    area_abc = (0.5 * ((x[1] * y[2] - x[2] * y[1]) - (x[0] * y[2] - x[2] * y[0]) - (x[0] * y[1] - x[1] * y[0])));
+    area_abc = 0.5 * ((bx * cy - cx * by) - (ax * cy - cx * ay) + (ax * by - bx * ay));
     
     for (int j = 0; j < state.image_height; j++) {
         for (int i = 0; i < state.image_width; i++) {
-            area_pbc = (0.5 * ((x[1] * y[2] - x[2] * y[1]) + (y[1] - y[2]) * i + (x[2] - x[1]) * j));
-            area_apc = (0.5 * ((x[2] * y[0] - x[0] * y[2]) + (y[2] - y[0]) * i + (x[0] - x[2]) * j));
-            area_abp = (0.5 * ((x[0] * y[1] - x[1] * y[0]) + (y[0] - y[1]) * i + (x[1] - x[0]) * j));
+            area_pbc = 0.5 * ((bx * cy - cx * by) + (by - cy) * i + (cx - bx) * j);
+            area_apc = 0.5 * ((cx * ay - ax * cy) + (cy - ay) * i + (ax - cx) * j);
+            area_abp = 0.5 * ((ax * by - bx * ay) + (ay - by) * i + (bx - ax) * j);
 
             alpha = area_pbc/area_abc;
             beta = area_apc/area_abc;
@@ -164,7 +174,7 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
                         break;
 
                         case interp_type::noperspective:
-                            frag.data[k] = alpha*in[0]->data[i] + beta*in[1]->data[i] + gamma*in[2]->data[i];
+                            frag.data[k] = alpha * in[0]->data[i] + beta * in[1]->data[i] + gamma * in[2]->data[i];
                         break;
 
                         default:
