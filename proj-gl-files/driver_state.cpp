@@ -308,9 +308,9 @@ void rasterize_triangle(driver_state& state, const data_geometry* in[3])
 
                         case interp_type::smooth:
                             k_gour = (alpha/in[0]->gl_Position[3] + beta/in[1]->gl_Position[3] + gamma/in[2]->gl_Position[3]);
-                            alpha_per = alpha/(k_gour/(in[0]->gl_Position[3]));
-                            beta_per = beta/(k_gour/(in[1]->gl_Position[3]));
-                            gamma_per = gamma/(k_gour/(in[2]->gl_Position[3]));
+                            alpha_per = alpha/k_gour/(in[0]->gl_Position[3]);
+                            beta_per = beta/k_gour/(in[1]->gl_Position[3]);
+                            gamma_per = gamma/k_gour/(in[2]->gl_Position[3]);
                             frag.data[k] = alpha_per * in[0]->data[k] + beta_per * in[1]->data[k] + gamma_per * in[2]-> data[k];
                         break;
 
