@@ -29,7 +29,7 @@ void initialize_render(driver_state& state, int width, int height)
     //std::cout<<"TODO: allocate and initialize state.image_color and state.image_depth."<<std::endl;
     for (int i = 0; i < (width * height); i++) {
       state.image_color[i] = make_pixel(0, 0, 0);
-      state.image_depth[i] = 2;
+      state.image_depth[i] = 1;
     }
 }
 
@@ -169,7 +169,7 @@ void clip_triangle(driver_state& state, const data_geometry* in[3],int face)
     const data_geometry *in1[3] = {in[0], in[1], in[2]};
     data_geometry d1[3], d2[3];
     //data_geometry d2[3];
-    float a_1, a_2, b_1, b_2;
+    float a_1, b_1, b_2;
     vec4 p_1, p_2;
  
     if (a[2] < -a[3] && b[2] < -b[3] && c[2] < -c[3]) {
